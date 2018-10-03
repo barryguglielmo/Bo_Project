@@ -1,9 +1,11 @@
 import matplotlib.pyplot as plt
+from pandas import ExcelWriter
+import numpy as np
 import pandas as pd
 import os
 
 ########################################################################
-def box_all_sheets(file, protlist, col, col_name):
+def box_all_sheets(file, protlist, col, col_name, zscore = True):
     """boxplots from same col of all sheets"""
     lg_data = []
     myfile = pd.ExcelFile(file)
@@ -16,12 +18,14 @@ def box_all_sheets(file, protlist, col, col_name):
     box.boxplot(rot = 45, fontsize = 9)
     plt.show()
     return box
+########################################################################
 def plate_data(file, sheet_id_number, r1, r2, c1, c2):
     """Get the Data For a 96 Well Plate thats been Read"""
     myfile = pd.ExcelFile(file)
     data = myfile.parse(sheet_id_number).iloc[r1:r2,c1:c2]
     return data
-def plate_3d(dataframe, graph_id, save_path, show = True):
+########################################################################
+def plate_3d(dataframe, graph_id, save_path, show = True, save = True):
     """Return 3D Bar Graph of all Plates"""
     style.use('ggplot')
     datamatrix = dataframe.as_matrix()
@@ -53,7 +57,30 @@ def plate_3d(dataframe, graph_id, save_path, show = True):
     ax1.set_ylabel(graph_id)
     ax1.set_zlabel('Absorbance')
     os.chdir(save_path)
-    plt.savefig(graph_id+'.png')
+    if save == True:
+        plt.savefig(graph_id+'.png')
     if show == True:
         plt.show()
     plt.close()
+########################################################################
+def data_from_all_sheets(file, col_names, protlist, r1, r2, c1, c2):
+    """Get the Data From all Sheets"""
+    lg_data = []
+    for i in protlist:
+        myfile = pd.ExcelFile(file)
+        data = myfile.parse(i).iloc[r1:r2,c1:c2]
+        data.columns = col_names
+        lg_data.append(data)
+    return lg_data
+#########################################################
+def myconcat(files, col_names, protlist, out_file, r1, r2, c1 , c2):
+    """Concat data from all sheets and return excel file"""
+    a = data_from_all_sheets(files[0], col_names, protlist ,r1, r2, c1, c2)
+    for f in range(1, len(files)):
+        b = data_from_all_sheets(files[f], col_names, protlist ,r1, r2, c1, c2)
+        for i in range(0, len(a)):
+            a[i] = pd.concat([a[i], b[i]])     
+    writer = ExcelWriter(out_file)
+    for i in range(0, len(a)):
+        a[i].to_excel(writer, sheet_name = str(protlist[i]))
+    writer.save()

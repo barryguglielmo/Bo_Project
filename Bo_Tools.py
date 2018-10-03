@@ -1,11 +1,12 @@
 import matplotlib.pyplot as plt
 from pandas import ExcelWriter
+from scipy import stats
 import numpy as np
 import pandas as pd
 import os
 
 ########################################################################
-def box_all_sheets(file, protlist, col, col_name, zscore = True):
+def box_all_sheets(file, protlist, col, col_name, z_score = True):
     """boxplots from same col of all sheets"""
     lg_data = []
     myfile = pd.ExcelFile(file)
@@ -15,9 +16,23 @@ def box_all_sheets(file, protlist, col, col_name, zscore = True):
     box = pd.DataFrame(lg_data)
     box = box.transpose()
     box.columns = protlist
+    if z_score ==True:
+        box = stats.zscore(box)
+        box = pd.DataFrame(box)
     box.boxplot(rot = 45, fontsize = 9)
     plt.show()
     return box
+########################################################################
+def box_cols_single(file, sheet_numb_or_name, col_names, z_score = True):
+    """Boxplot of all cols of a single sheet"""
+    myfile = pd.ExcelFile(file)
+    data = myfile.parse(sheet_numb_or_name)
+    if z_score ==True:
+        data = stats.zscore(data)
+        data = pd.DataFrame(data)
+    data.boxplot(rot = 45, fontsize = 9)
+    plt.show()
+    return data
 ########################################################################
 def plate_data(file, sheet_id_number, r1, r2, c1, c2):
     """Get the Data For a 96 Well Plate thats been Read"""
